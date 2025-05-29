@@ -1,0 +1,898 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Life Dashboard</title>
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+   <style>
+       :root {
+           --primary-bg: #1e1e1e;
+           --secondary-bg: #2a2a2a;
+           --tertiary-bg: #333333;
+           --text-color: #e0e0e0;
+           --accent-color: #00b8d4; /* Teal accent from screenshots */
+           --accent-hover: #0097a7;
+           --border-color: #444444;
+           --input-bg: #3c3c3c;
+           --card-bg: #252525;
+           --box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+           --success-color: #4CAF50;
+           --error-color: #F44336;
+           --priority-high: #ff7675;
+           --priority-medium: #fdcb6e;
+           --priority-low: #55efc4;
+       }
+
+       body {
+           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+           margin: 0;
+           background-color: var(--primary-bg);
+           color: var(--text-color);
+           line-height: 1.6;
+           display: flex;
+           flex-direction: column;
+           min-height: 100vh;
+       }
+
+       header {
+           background-color: var(--secondary-bg);
+           padding: 1rem 2rem;
+           text-align: center;
+           box-shadow: var(--box-shadow);
+       }
+
+       header h1 {
+           margin: 0;
+           color: var(--accent-color);
+           font-size: 1.8rem;
+       }
+
+       nav {
+           margin-top: 0.5rem;
+           display: flex;
+           justify-content: center;
+           flex-wrap: wrap;
+           gap: 0.5rem;
+       }
+
+       .nav-button {
+           background-color: var(--tertiary-bg);
+           color: var(--text-color);
+           border: 1px solid var(--border-color);
+           padding: 0.6rem 1.2rem;
+           border-radius: 5px;
+           cursor: pointer;
+           transition: background-color 0.3s, color 0.3s;
+           font-size: 0.9rem;
+       }
+
+       .nav-button:hover, .nav-button.active {
+           background-color: var(--accent-color);
+           color: var(--primary-bg);
+           border-color: var(--accent-hover);
+       }
+
+       main {
+           flex-grow: 1;
+           padding: 1.5rem;
+           max-width: 900px;
+           margin: 1rem auto;
+           width: 95%;
+       }
+
+       .view {
+           display: none;
+           background-color: var(--secondary-bg);
+           padding: 1.5rem;
+           border-radius: 8px;
+           box-shadow: var(--box-shadow);
+           animation: fadeIn 0.5s ease-in-out;
+       }
+
+       @keyframes fadeIn {
+           from { opacity: 0; transform: translateY(10px); }
+           to { opacity: 1; transform: translateY(0); }
+       }
+
+       .view.active-view {
+           display: block;
+       }
+
+       h2 {
+           color: var(--accent-color);
+           border-bottom: 2px solid var(--accent-color);
+           padding-bottom: 0.5rem;
+           margin-top: 0;
+       }
+
+       h2 .fas {
+           margin-right: 0.5em;
+       }
+
+       .input-group {
+           margin-bottom: 1.5rem;
+           display: flex;
+           flex-wrap: wrap;
+           gap: 0.8rem;
+           align-items: center;
+       }
+
+       input[type="text"], input[type="date"], select, textarea {
+           background-color: var(--input-bg);
+           color: var(--text-color);
+           border: 1px solid var(--border-color);
+           padding: 0.8rem;
+           border-radius: 5px;
+           flex-grow: 1;
+           font-size: 1rem;
+       }
+
+       textarea {
+           min-height: 100px;
+           width: 100%;
+           box-sizing: border-box;
+       }
+
+       button {
+           background-color: var(--accent-color);
+           color: #fff; /* White text on accent buttons for contrast */
+           border: none;
+           padding: 0.8rem 1.2rem;
+           border-radius: 5px;
+           cursor: pointer;
+           transition: background-color 0.3s;
+           font-size: 1rem;
+       }
+
+       button .fas {
+           margin-right: 0.3em;
+       }
+
+       button:hover {
+           background-color: var(--accent-hover);
+       }
+
+       /* Habit Tracker Specific */
+       .habit-item {
+           background-color: var(--card-bg);
+           padding: 1rem;
+           margin-bottom: 0.8rem;
+           border-radius: 5px;
+           display: flex;
+           justify-content: space-between;
+           align-items: center;
+           box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+       }
+
+       .habit-item .habit-name {
+           flex-grow: 1;
+       }
+
+       .habit-item .habit-controls {
+           display: flex;
+           align-items: center;
+           gap: 0.5rem;
+       }
+
+       .habit-item input[type="number"] {
+           width: 70px;
+           padding: 0.5rem;
+           text-align: center;
+       }
+
+       .habit-item .streak-count {
+           font-weight: bold;
+           margin-right: 5px;
+       }
+
+       .habit-item .toggle-switch {
+           position: relative;
+           display: inline-block;
+           width: 50px;
+           height: 28px;
+       }
+
+       .habit-item .toggle-switch input {
+           opacity: 0;
+           width: 0;
+           height: 0;
+       }
+
+       .habit-item .slider {
+           position: absolute;
+           cursor: pointer;
+           top: 0;
+           left: 0;
+           right: 0;
+           bottom: 0;
+           background-color: var(--tertiary-bg);
+           transition: .4s;
+           border-radius: 28px;
+       }
+
+       .habit-item .slider:before {
+           position: absolute;
+           content: "";
+           height: 20px;
+           width: 20px;
+           left: 4px;
+           bottom: 4px;
+           background-color: white;
+           transition: .4s;
+           border-radius: 50%;
+       }
+
+       .habit-item input:checked + .slider {
+           background-color: var(--success-color);
+       }
+
+       .habit-item input:checked + .slider:before {
+           transform: translateX(22px);
+       }
+
+       /* To-Do List Specific */
+       .task-item {
+           background-color: var(--card-bg);
+           padding: 0.8rem 1rem;
+           margin-bottom: 0.8rem;
+           border-radius: 5px;
+           display: flex;
+           align-items: center;
+           gap: 0.8rem;
+           border-left: 5px solid var(--border-color); /* Default border */
+       }
+
+       .task-item.priority-high { border-left-color: var(--priority-high); }
+       .task-item.priority-medium { border-left-color: var(--priority-medium); }
+       .task-item.priority-low { border-left-color: var(--priority-low); }
+
+       .task-item input[type="checkbox"] {
+           width: 20px;
+           height: 20px;
+           cursor: pointer;
+           accent-color: var(--accent-color); /* Modern way to style checkbox */
+       }
+
+       .task-item .task-text {
+           flex-grow: 1;
+       }
+
+       .task-item.completed .task-text {
+           text-decoration: line-through;
+           color: #aaa;
+       }
+
+       .task-item .task-due-date {
+           font-size: 0.8em;
+           color: #ccc;
+           margin-left: auto;
+           margin-right: 10px;
+       }
+
+       .task-item .delete-task-btn {
+           background: none;
+           border: none;
+           color: var(--error-color);
+           cursor: pointer;
+           font-size: 1.1rem;
+       }
+
+       .task-item .delete-task-btn:hover {
+           color: darkred;
+       }
+
+       /* Journal Specific */
+       #journal-history-container {
+           margin-top: 1.5rem;
+           padding-top: 1rem;
+           border-top: 1px solid var(--border-color);
+       }
+
+       .journal-entry {
+           background-color: var(--card-bg);
+           padding: 1rem;
+           margin-bottom: 1rem;
+           border-radius: 5px;
+       }
+
+       .journal-entry .date {
+           font-weight: bold;
+           color: var(--accent-color);
+           font-size: 0.9em;
+       }
+
+       .journal-entry .mood, .journal-entry .tags {
+           font-size: 0.85em;
+           color: #ccc;
+           margin-top: 0.3rem;
+       }
+
+       .journal-entry .mood strong, .journal-entry .tags strong {
+           color: var(--text-color);
+       }
+
+       .journal-entry p {
+           white-space: pre-wrap; /* Preserve line breaks */
+       }
+
+       /* Study Mode - AI Chat */
+       .ai-chat-container {
+           margin-top: 2rem;
+           padding: 1rem;
+           background-color: var(--card-bg);
+           border-radius: 5px;
+       }
+
+       .ai-chat-container h3 .fas{
+           margin-right: 0.3em;
+       }
+
+       .chat-output {
+           height: 200px;
+           overflow-y: auto;
+           border: 1px solid var(--border-color);
+           padding: 0.8rem;
+           margin-bottom: 0.8rem;
+           border-radius: 5px;
+           background-color: var(--primary-bg);
+       }
+
+       .chat-output p {
+           margin: 0 0 0.5rem 0;
+           word-wrap: break-word;
+       }
+
+       .chat-output p.user-message {
+           text-align: right;
+           color: var(--accent-color);
+       }
+
+       .chat-output p.ai-message {
+           text-align: left;
+           color: var(--text-color);
+       }
+
+       .api-warning {
+           font-size: 0.8em;
+           color: var(--error-color);
+           text-align: center;
+           margin-top: 10px;
+       }
+
+       /* Home View Quick Stats */
+       .quick-stats {
+           display: flex;
+           gap: 1rem;
+           margin-top: 1.5rem;
+           flex-wrap: wrap;
+       }
+
+       .stat-card {
+           background-color: var(--card-bg);
+           padding: 1.5rem;
+           border-radius: 8px;
+           flex-grow: 1;
+           text-align: center;
+           box-shadow: var(--box-shadow);
+       }
+
+       .stat-card h3 {
+           margin-top: 0;
+           color: var(--accent-color);
+       }
+
+       .stat-card p {
+           font-size: 2rem;
+           font-weight: bold;
+           margin-bottom: 0;
+       }
+
+       /* Footer */
+       footer {
+           text-align: center;
+           padding: 1rem;
+           background-color: var(--secondary-bg);
+           color: #aaa;
+           font-size: 0.9em;
+           margin-top: auto; /* Pushes footer to bottom */
+       }
+
+       /* Utility */
+       .delete-btn {
+           background-color: var(--error-color);
+           color: white;
+           padding: 0.3rem 0.6rem;
+           font-size: 0.8rem;
+           margin-left: 10px;
+       }
+
+       .delete-btn:hover {
+           background-color: darkred;
+       }
+   </style>
+</head>
+<body>
+   <header>
+       <h1>Life Dashboard</h1>
+       <nav>
+           <button data-view="home-view" class="nav-button active">Home</button>
+           <button data-view="habit-tracker-view" class="nav-button">Habit Tracker</button>
+           <button data-view="todo-list-view" class="nav-button">To-Do List</button>
+           <button data-view="journal-view" class="nav-button">Journal</button>
+           <button data-view="study-mode-view" class="nav-button">Study Mode</button>
+           <button data-view="notepad-view" class="nav-button">Notepad</button>
+       </nav>
+   </header>
+   <main>
+       <section id="home-view" class="view active-view">
+           <h2>Welcome to Your Dashboard</h2>
+           <p>Select a section from the navigation to get started.</p>
+           <div class="quick-stats">
+               <div class="stat-card">
+                   <h3>Active Habits</h3>
+                   <p id="home-active-habits">0</p>
+               </div>
+               <div class="stat-card">
+                   <h3>Pending Tasks</h3>
+                   <p id="home-pending-tasks">0</p>
+               </div>
+               <div class="stat-card">
+                   <h3>Journal Entries</h3>
+                   <p id="home-journal-entries">0</p>
+               </div>
+           </div>
+       </section>
+
+       <section id="habit-tracker-view" class="view">
+           <h2><i class="fas fa-chart-line"></i> Habit Tracker</h2>
+           <p>Monitor your key habits for self-improvement.</p>
+           <div class="input-group">
+               <input type="text" id="new-habit-name" placeholder="Enter new habit name (e.g., Read for 30 mins)">
+               <select id="new-habit-type">
+                   <option value="toggle">Toggle (e.g., Workout Today)</option>
+                   <option value="numerical">Numerical (e.g., Sleep Hours)</option>
+                   <option value="streak">Streak (e.g., Meditated)</option>
+               </select>
+               <button id="add-habit-btn"><i class="fas fa-plus"></i> Add Habit</button>
+           </div>
+           <div id="habits-container">
+           </div>
+       </section>
+
+       <section id="todo-list-view" class="view">
+           <h2><i class="fas fa-list-check"></i> To-Do List</h2>
+           <p>Organize your tasks and stay productive.</p>
+           <div class="input-group">
+               <input type="text" id="new-task-text" placeholder="Add a new task...">
+               <select id="new-task-priority">
+                   <option value="low">Low Priority</option>
+                   <option value="medium" selected>Medium Priority</option>
+                   <option value="high">High Priority</option>
+               </select>
+               <input type="date" id="new-task-date">
+               <button id="add-task-btn"><i class="fas fa-plus"></i> Add Task</button>
+           </div>
+           <div id="tasks-container">
+           </div>
+       </section>
+
+       <section id="journal-view" class="view">
+           <h2><i class="fas fa-book-open"></i> Journal</h2>
+           <p>Reflect on your day, thoughts, and experiences.</p>
+           <textarea id="journal-text" placeholder="Write your thoughts here..."></textarea>
+           <div class="input-group">
+               <input type="text" id="journal-mood" placeholder="Mood (optional, e.g., Happy, Productive)">
+               <input type="text" id="journal-tags" placeholder="Tags (optional, comma-separated, e.g., work, reflection)">
+           </div>
+           <button id="save-journal-btn"><i class="fas fa-save"></i> Save Entry</button>
+           <button id="view-journal-history-btn"><i class="fas fa-history"></i> View History</button>
+           <div id="journal-history-container" style="display: none;">
+               <h3>Journal History</h3>
+               <div id="journal-entries-list"></div>
+           </div>
+       </section>
+
+       <section id="study-mode-view" class="view">
+           <h2><i class="fas fa-book-reader"></i> Study Mode</h2>
+           <p>Your dedicated zone for CLAT / MHCET preparation (or any other study!).</p>
+           <div class="study-content">
+               <p>This section is under active development. Soon you'll find flashcards, quizzes, study materials, and AI-powered learning tools here!</p>
+               <div class="ai-chat-container">
+                   <h3><i class="fas fa-robot"></i> AI Study Helper</h3>
+                   <div id="ai-chat-output" class="chat-output">
+                       <p>Ask me anything to help with your studies!</p>
+                   </div>
+                   <div class="input-group">
+                       <input type="text" id="ai-chat-input" placeholder="Type your question...">
+                       <button id="ai-chat-submit-btn">Send</button>
+                   </div>
+                   <p class="api-warning"><strong>Warning:</strong> API key is exposed in client-side code. For real applications, use a backend proxy.</p>
+               </div>
+           </div>
+       </section>
+
+       <section id="notepad-view" class="view">
+           <h2><i class="fas fa-sticky-note"></i> Notepad</h2>
+           <p>Jot down quick notes and ideas.</p>
+           <textarea id="notepad-text" placeholder="Start writing your notes..."></textarea>
+           <button id="save-notepad-btn"><i class="fas fa-save"></i> Save Note</button>
+           <button id="load-notepad-btn"><i class="fas fa-upload"></i> Load Note</button>
+           <p id="notepad-status"></p>
+       </section>
+   </main>
+
+   <footer>
+       <p>© 2025 Your Life Dashboard</p>
+   </footer>
+
+   <script>
+       document.addEventListener('DOMContentLoaded', () => {
+           // --- Navigation ---
+           const navButtons = document.querySelectorAll('.nav-button');
+           const views = document.querySelectorAll('.view');
+
+           navButtons.forEach(button => {
+               button.addEventListener('click', () => {
+                   const targetViewId = button.getAttribute('data-view');
+
+                   views.forEach(view => {
+                       view.classList.remove('active-view');
+                       if (view.id === targetViewId) {
+                           view.classList.add('active-view');
+                       }
+                   });
+
+                   navButtons.forEach(btn => btn.classList.remove('active'));
+                   button.classList.add('active');
+                   if (targetViewId === 'home-view') updateHomeStats();
+               });
+           });
+
+           // --- API Key (SECURITY WARNING: For demonstration only) ---
+           const API_KEY = "AIzaSyAkom_AkwohBhh9YTp066DpFxjtokobUy4"; // Exposed API Key!
+           const MODEL_NAME = "gemini-1.5-flash-latest"; // Or "gemini-pro"
+
+           // --- LocalStorage Keys ---
+           const HABITS_KEY = 'lifeDashboardHabits';
+           const TASKS_KEY = 'lifeDashboardTasks';
+           const JOURNAL_KEY = 'lifeDashboardJournal';
+           const NOTEPAD_KEY = 'lifeDashboardNotepad';
+
+           // --- Helper: Save/Load from LocalStorage ---
+           const saveData = (key, data) => localStorage.setItem(key, JSON.stringify(data));
+           const loadData = (key, defaultValue = []) => JSON.parse(localStorage.getItem(key)) || defaultValue;
+
+           // --- Habit Tracker ---
+           const habitsContainer = document.getElementById('habits-container');
+           const newHabitNameInput = document.getElementById('new-habit-name');
+           const newHabitTypeSelect = document.getElementById('new-habit-type');
+           const addHabitBtn = document.getElementById('add-habit-btn');
+           let habits = loadData(HABITS_KEY);
+
+           const renderHabits = () => {
+               habitsContainer.innerHTML = '';
+               if (habits.length === 0) {
+                   habitsContainer.innerHTML = '<p>No habits added yet. Start by adding a new one!</p>';
+                   return;
+               }
+               habits.forEach((habit, index) => {
+                   const habitEl = document.createElement('div');
+                   habitEl.classList.add('habit-item');
+                   habitEl.innerHTML = `
+                       <span class="habit-name">${habit.name} ${habit.type === 'streak' ? `(<span class="streak-count">${habit.streak || 0}</span> days)` : ''}</span>
+                       <div class="habit-controls">
+                           ${habit.type === 'toggle' ? `
+                               <label class="toggle-switch">
+                                   <input type="checkbox" data-index="${index}" ${habit.completed ? 'checked' : ''}>
+                                   <span class="slider"></span>
+                               </label>
+                           ` : ''}
+                           ${habit.type === 'numerical' ? `
+                               <input type="number" data-index="${index}" value="${habit.value || ''}" placeholder="Set">
+                               <button class="set-numerical-btn" data-index="${index}">Set</button>
+                           ` : ''}
+                           ${habit.type === 'streak' ? `
+                               <button class="increment-streak-btn" data-index="${index}">Done Today</button>
+                               <button class="reset-streak-btn" data-index="${index}">Reset</button>
+                           ` : ''}
+                           <button class="delete-btn delete-habit-btn" data-index="${index}"><i class="fas fa-trash"></i></button>
+                       </div>
+                   `;
+                   habitsContainer.appendChild(habitEl);
+               });
+               updateHomeStats();
+           };
+
+           addHabitBtn.addEventListener('click', () => {
+               const name = newHabitNameInput.value.trim();
+               const type = newHabitTypeSelect.value;
+               if (name) {
+                   habits.push({ name, type, completed: false, value: type === 'numerical' ? 0 : null, streak: type === 'streak' ? 0 : null, lastIncrementDate: null });
+                   newHabitNameInput.value = '';
+                   saveData(HABITS_KEY, habits);
+                   renderHabits();
+               }
+           });
+
+           habitsContainer.addEventListener('click', e => {
+               const index = e.target.dataset.index;
+               if (e.target.classList.contains('delete-habit-btn') || e.target.closest('.delete-habit-btn')) {
+                   habits.splice(index, 1);
+               } else if (e.target.matches('input[type="checkbox"]')) {
+                   habits[index].completed = e.target.checked;
+               } else if (e.target.classList.contains('set-numerical-btn')) {
+                   const inputVal = habitsContainer.querySelector(`input[type="number"][data-index="${index}"]`).value;
+                   habits[index].value = parseFloat(inputVal) || 0;
+               } else if (e.target.classList.contains('increment-streak-btn')) {
+                   const today = new Date().toDateString();
+                   if (habits[index].lastIncrementDate !== today) {
+                       habits[index].streak = (habits[index].streak || 0) + 1;
+                       habits[index].lastIncrementDate = today;
+                   } else {
+                       alert("Streak already incremented for today!");
+                   }
+               } else if (e.target.classList.contains('reset-streak-btn')) {
+                   habits[index].streak = 0;
+                   habits[index].lastIncrementDate = null;
+               } else {
+                   return; // Do nothing if not an interactive element
+               }
+               saveData(HABITS_KEY, habits);
+               renderHabits();
+           });
+
+           // --- To-Do List ---
+           const tasksContainer = document.getElementById('tasks-container');
+           const newTaskTextInput = document.getElementById('new-task-text');
+           const newTaskPriorityInput = document.getElementById('new-task-priority');
+           const newTaskDateInput = document.getElementById('new-task-date');
+           const addTaskBtn = document.getElementById('add-task-btn');
+           let tasks = loadData(TASKS_KEY);
+
+           const renderTasks = () => {
+               tasksContainer.innerHTML = '';
+               if (tasks.length === 0) {
+                   tasksContainer.innerHTML = '<p>No tasks yet. Add some to get started!</p>';
+                   return;
+               }
+               // Sort tasks: incomplete first, then by due date (soonest first), then by priority (high first)
+               const sortedTasks = [...tasks].sort((a,b) => {
+                   if (a.completed !== b.completed) return a.completed ? 1 : -1;
+                   if (a.dueDate && b.dueDate) {
+                       const dateA = new Date(a.dueDate);
+                       const dateB = new Date(b.dueDate);
+                       if(dateA !== dateB) return dateA - dateB;
+                   } else if (a.dueDate) return -1; // Tasks with due dates first
+                   else if (b.dueDate) return 1;
+
+                   const priorityOrder = { high: 0, medium: 1, low: 2 };
+                   return priorityOrder[a.priority] - priorityOrder[b.priority];
+               });
+
+               sortedTasks.forEach((task, index) => { // Use original index for deletion/update from `tasks` array
+                   const originalIndex = tasks.findIndex(t => t.id === task.id);
+                   const taskEl = document.createElement('div');
+                   taskEl.classList.add('task-item', `priority-${task.priority}`);
+                   if (task.completed) taskEl.classList.add('completed');
+
+                   taskEl.innerHTML = `
+                       <input type="checkbox" data-index="${originalIndex}" ${task.completed ? 'checked' : ''}>
+                       <span class="task-text">${task.text}</span>
+                       ${task.dueDate ? `<span class="task-due-date">Due: ${new Date(task.dueDate).toLocaleDateString()}</span>` : ''}
+                       <button class="delete-task-btn" data-index="${originalIndex}"><i class="fas fa-trash-alt"></i></button>
+                   `;
+                   tasksContainer.appendChild(taskEl);
+               });
+               updateHomeStats();
+           };
+
+           addTaskBtn.addEventListener('click', () => {
+               const text = newTaskTextInput.value.trim();
+               const priority = newTaskPriorityInput.value;
+               const dueDate = newTaskDateInput.value;
+               if (text) {
+                   tasks.push({ id: Date.now(), text, priority, dueDate, completed: false });
+                   newTaskTextInput.value = '';
+                   newTaskDateInput.value = '';
+                   saveData(TASKS_KEY, tasks);
+                   renderTasks();
+               }
+           });
+
+           tasksContainer.addEventListener('click', e => {
+               const index = e.target.dataset.index;
+               if (e.target.matches('input[type="checkbox"]')) {
+                   tasks[index].completed = e.target.checked;
+               } else if (e.target.classList.contains('delete-task-btn') || e.target.closest('.delete-task-btn')) {
+                   tasks.splice(index, 1);
+               } else {
+                   return;
+               }
+               saveData(TASKS_KEY, tasks);
+               renderTasks();
+           });
+
+           // --- Journal ---
+           const journalTextarea = document.getElementById('journal-text');
+           const journalMoodInput = document.getElementById('journal-mood');
+           const journalTagsInput = document.getElementById('journal-tags');
+           const saveJournalBtn = document.getElementById('save-journal-btn');
+           const viewJournalHistoryBtn = document.getElementById('view-journal-history-btn');
+           const journalHistoryContainer = document.getElementById('journal-history-container');
+           const journalEntriesList = document.getElementById('journal-entries-list');
+           let journalEntries = loadData(JOURNAL_KEY);
+
+           const renderJournalHistory = () => {
+               journalEntriesList.innerHTML = '';
+               if (journalEntries.length === 0) {
+                   journalEntriesList.innerHTML = '<p>No journal entries yet.</p>';
+                   return;
+               }
+               [...journalEntries].reverse().forEach(entry => { // Show newest first
+                   const entryEl = document.createElement('div');
+                   entryEl.classList.add('journal-entry');
+                   entryEl.innerHTML = `
+                       <p class="date">${new Date(entry.date).toLocaleString()}</p>
+                       <p>${entry.text.replace(/\n/g, '<br>')}</p>
+                       ${entry.mood ? `<p class="mood"><strong>Mood:</strong> ${entry.mood}</p>` : ''}
+                       ${entry.tags ? `<p class="tags"><strong>Tags:</strong> ${entry.tags}</p>` : ''}
+                   `;
+                   journalEntriesList.appendChild(entryEl);
+               });
+               updateHomeStats();
+           };
+
+           saveJournalBtn.addEventListener('click', () => {
+               const text = journalTextarea.value.trim();
+               const mood = journalMoodInput.value.trim();
+               const tags = journalTagsInput.value.trim();
+               if (text) {
+                   journalEntries.push({ date: new Date().toISOString(), text, mood, tags });
+                   journalTextarea.value = '';
+                   journalMoodInput.value = '';
+                   journalTagsInput.value = '';
+                   saveData(JOURNAL_KEY, journalEntries);
+                   if (journalHistoryContainer.style.display === 'block') {
+                       renderJournalHistory();
+                   }
+                   alert('Journal entry saved!');
+               }
+           });
+
+           viewJournalHistoryBtn.addEventListener('click', () => {
+               if (journalHistoryContainer.style.display === 'none' || journalHistoryContainer.style.display === '') {
+                   renderJournalHistory();
+                   journalHistoryContainer.style.display = 'block';
+                   viewJournalHistoryBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide History';
+               } else {
+                   journalHistoryContainer.style.display = 'none';
+                   viewJournalHistoryBtn.innerHTML = '<i class="fas fa-history"></i> View History';
+               }
+           });
+
+           // --- Study Mode (AI Chat) ---
+           const aiChatOutput = document.getElementById('ai-chat-output');
+           const aiChatInput = document.getElementById('ai-chat-input');
+           const aiChatSubmitBtn = document.getElementById('ai-chat-submit-btn');
+
+           const addMessageToChat = (message, sender) => {
+               const p = document.createElement('p');
+               p.textContent = message;
+               p.classList.add(sender === 'user' ? 'user-message' : 'ai-message');
+               aiChatOutput.appendChild(p);
+               aiChatOutput.scrollTop = aiChatOutput.scrollHeight; // Scroll to bottom
+           };
+
+           async function fetchAIResponse(promptText) {
+               addMessageToChat("Thinking...", "ai");
+               const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${API_KEY}`;
+
+               try {
+                   const response = await fetch(API_URL, {
+                       method: "POST",
+                       headers: { "Content-Type": "application/json" },
+                       body: JSON.stringify({
+                           contents: [{ parts: [{ text: promptText }] }],
+                           generationConfig: {
+                               temperature: 0.7, // Adjust for creativity vs. factuality
+                               topK: 1,
+                               topP: 1,
+                               maxOutputTokens: 512, // Adjust as needed
+                           },
+                           safetySettings: [ // Basic safety settings
+                               { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+                               { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+                               { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+                               { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+                           ]
+                       })
+                   });
+
+                   if (!response.ok) {
+                       const errorData = await response.json();
+                       console.error("AI API Error:", errorData);
+                       addMessageToChat(`Error: ${errorData.error?.message || response.statusText}`, "ai");
+                       return;
+                   }
+
+                   const data = await response.json();
+                   if (data.candidates && data.candidates.length > 0 && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts.length > 0) {
+                       // Remove the "Thinking..." message before adding the actual response
+                       const thinkingMessage = Array.from(aiChatOutput.children).find(child => child.textContent === "Thinking...");
+                       if (thinkingMessage) thinkingMessage.remove();
+                       addMessageToChat(data.candidates[0].content.parts[0].text, "ai");
+                   } else if (data.promptFeedback && data.promptFeedback.blockReason) {
+                       const thinkingMessage = Array.from(aiChatOutput.children).find(child => child.textContent === "Thinking...");
+                       if (thinkingMessage) thinkingMessage.remove();
+                       addMessageToChat(`Blocked: ${data.promptFeedback.blockReason}. Please rephrase your question.`, "ai");
+                   } else {
+                       const thinkingMessage = Array.from(aiChatOutput.children).find(child => child.textContent === "Thinking...");
+                       if (thinkingMessage) thinkingMessage.remove();
+                       addMessageToChat("No response or unexpected format from AI.", "ai");
+                   }
+               } catch (error) {
+                   console.error("Error fetching AI response:", error);
+                   const thinkingMessage = Array.from(aiChatOutput.children).find(child => child.textContent === "Thinking...");
+                   if (thinkingMessage) thinkingMessage.remove();
+                   addMessageToChat("Failed to fetch AI response. Check console for details.", "ai");
+               }
+           }
+
+           aiChatSubmitBtn.addEventListener('click', () => {
+               const prompt = aiChatInput.value.trim();
+               if (prompt) {
+                   addMessageToChat(prompt, 'user');
+                   fetchAIResponse(prompt);
+                   aiChatInput.value = '';
+               }
+           });
+           aiChatInput.addEventListener('keypress', (e) => {
+               if (e.key === 'Enter') {
+                   aiChatSubmitBtn.click();
+               }
+           });
+
+           // --- Notepad ---
+           const notepadTextarea = document.getElementById('notepad-text');
+           const saveNotepadBtn = document.getElementById('save-notepad-btn');
+           const loadNotepadBtn = document.getElementById('load-notepad-btn');
+           const notepadStatus = document.getElementById('notepad-status');
+
+           saveNotepadBtn.addEventListener('click', () => {
+               saveData(NOTEPAD_KEY, notepadTextarea.value);
+               notepadStatus.textContent = 'Note saved!';
+               setTimeout(() => notepadStatus.textContent = '', 2000);
+           });
+
+           loadNotepadBtn.addEventListener('click', () => {
+               notepadTextarea.value = loadData(NOTEPAD_KEY, '');
+               notepadStatus.textContent = 'Note loaded!';
+               setTimeout(() => notepadStatus.textContent = '', 2000);
+           });
+
+           // --- Home Screen Stats ---
+           const homeActiveHabitsEl = document.getElementById('home-active-habits');
+           const homePendingTasksEl = document.getElementById('home-pending-tasks');
+           const homeJournalEntriesEl = document.getElementById('home-journal-entries');
+
+           function updateHomeStats() {
+               const activeHabits = habits.length; // Could be refined to count 'active' habits if logic changes
+               const pendingTasks = tasks.filter(task => !task.completed).length;
+               const journalEntriesCount = journalEntries.length;
+
+               homeActiveHabitsEl.textContent = activeHabits;
+               homePendingTasksEl.textContent = pendingTasks;
+               homeJournalEntriesEl.textContent = journalEntriesCount;
+           }
+
+           // --- Initial Renders ---
+           renderHabits();
+           renderTasks();
+           // Journal history is loaded on demand
+           notepadTextarea.value = loadData(NOTEPAD_KEY, ''); // Load notepad on start
+           updateHomeStats(); // Initial call for home screen
+       });
+   </script>
+</body>
+</html>
